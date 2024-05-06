@@ -6,8 +6,8 @@ class NetworkInterfaceEnableIPForwarding(BaseResourceValueCheck):
     def __init__(self):
         name = "Ensure that Azure File Sync disables public network access"
         id = "CKV_AZURE_657"
-        supported_resources = ['Microsoft.StorageSync/storageSyncServices']
-        categories = [CheckCategories.NETWORKING]
+        supported_resources = ('Microsoft.StorageSync/storageSyncServices',)
+        categories = (CheckCategories.NETWORKING,)
         super().__init__(name=name, id=id, categories=categories, supported_resources=supported_resources,
                          missing_block_result=CheckResult.FAILED)
 

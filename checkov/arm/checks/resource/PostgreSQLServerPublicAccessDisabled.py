@@ -6,7 +6,7 @@ class PostgreSQLServerHasPublicAccessDisabled(BaseResourceValueCheck):
     def __init__(self):
         name = "Ensure that PostgreSQL server disables public network access"
         id = "CKV_AZURE_68"
-        supported_resources = ['Microsoft.DBforPostgreSQL/servers']
+        supported_resources = ('Microsoft.DBforPostgreSQL/servers',)
         categories = [CheckCategories.NETWORKING]
         super().__init__(name=name, id=id, categories=categories, supported_resources=supported_resources,
                          missing_block_result=CheckResult.FAILED)

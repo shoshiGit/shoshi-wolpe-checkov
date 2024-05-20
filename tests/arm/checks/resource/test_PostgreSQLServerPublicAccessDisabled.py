@@ -1,87 +1,42 @@
 import unittest
+from pathlib import Path
 from checkov.arm.checks.resource.PostgreSQLServerPublicAccessDisabled import check
-from checkov.common.models.enums import CheckResult
+from checkov.arm.runner import Runner
+from checkov.runner_filter import RunnerFilter
 
 
 class TestPostgreSQLServerPublicAccessDisabled(unittest.TestCase):
 
-    def test_failure_1(self):
-        resource_conf = {
-            "type": "Microsoft.DBforPostgreSQL/servers",
-            "apiVersion": "2021-02-01",
-            "name": "example-psqlserver",
-            "location": "[azurerm_resource_group.example.location]",
-            "sku": {
-                "name": "GP_Gen5_4"
-            },
-            "properties": {
-                "administrator_login": "psqladminun",
-                "administrator_login_password": "H@Sh1CoR3!",  # checkov:skip=CKV_SECRET_80 test secret
-                "version": "9.6",
-                "storageProfile": {
-                    "storageMB": 640000,
-                    "backupRetentionDays": 7,
-                    "geoRedundantBackup": "Enabled",
-                    "auto_grow_enabled": "Enabled"
-                },
-                "publicNetworkAccess": "Enabled",
-                "ssl_enforcement_enabled ": True,
-                "ssl_minimal_tls_version_enforced": "TLS1_2"
-            }
+    def test_summary(self):
+        # given
+        test_files_dir = Path(__file__).parent / "example_PostgreSQLServerPublicAccessDisable"
+
+        # when
+        report = Runner().run(root_folder=str(test_files_dir), runner_filter=RunnerFilter(checks=[check.id]))
+
+        # then
+        summary = report.get_summary()
+
+        passing_resources = {
+            "Microsoft.DBforPostgreSQL/servers.pass",
         }
-        scan_result = check.scan_resource_conf(conf=resource_conf)
-        self.assertEqual(CheckResult.FAILED, scan_result)
 
-    def test_failure_2(self):
-        resource_conf = {
-            "type": "Microsoft.DBforPostgreSQL/servers",
-            "apiVersion": "2021-02-01",
-            "name": "example-psqlserver",
-            "location": "azurerm_resource_group.example.location",
-            "sku": {
-                "name": "GP_Gen5_4"
-            },
-            "properties": {
-                "administrator_login": "psqladminun",
-                "administrator_login_password": "H@Sh1CoR3!",
-                "version": "9.6",
-                "storageProfile": {
-                    "storageMB": 640000,
-                    "backupRetentionDays": 7,
-                    "geoRedundantBackup": "Enabled",
-                    "auto_grow_enabled": "Enabled"
-                },
-                "ssl_enforcement_enabled ": True,
-                "ssl_minimal_tls_version_enforced": "TLS1_2"
-            }
+        failing_resources = {
+            "Microsoft.DBforPostgreSQL/servers.fail1",
+            "Microsoft.DBforPostgreSQL/servers.fail2"
         }
-        scan_result = check.scan_resource_conf(conf=resource_conf)
-        self.assertEqual(CheckResult.FAILED, scan_result)
 
-    def test_success(self):
-        resource_conf = {
-            "type": "Microsoft.DBforPostgreSQL/servers",
-            "apiVersion": "2021-02-01",
-            "name": "example-psqlserver",
-            "location": "[azurerm_resource_group.example.location]",
-            "properties": {
-                "administrator_login": "psqladminun",
-                "administrator_login_password": "H@Sh1CoR3!",
-                "version": "9.6",
-                "storageProfile": {
-                    "storageMB": 640000,
-                    "backupRetentionDays": 7,
-                    "geoRedundantBackup": "Enabled",
-                    "auto_grow_enabled": "Enabled"
-                },
-                "publicNetworkAccess": "Disabled",
-                "ssl_enforcement_enabled ": True,
-                "ssl_minimal_tls_version_enforced": "TLS1_2"
-            }
-        }
-        scan_result = check.scan_resource_conf(conf=resource_conf)
-        self.assertEqual(CheckResult.PASSED, scan_result)
+        passed_check_resources = {c.resource for c in report.passed_checks}
+        failed_check_resources = {c.resource for c in report.failed_checks}
+
+        self.assertEqual(summary["passed"], len(passing_resources))
+        self.assertEqual(summary["failed"], len(failing_resources))
+        self.assertEqual(summary["skipped"], 0)
+        self.assertEqual(summary["parsing_errors"], 0)
+
+        self.assertSetEqual(passing_resources, passed_check_resources)
+        self.assertSetEqual(failing_resources, failed_check_resources)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 from checkov.common.models.enums import CheckCategories, CheckResult
 from checkov.arm.base_resource_value_check import BaseResourceValueCheck
 
@@ -16,7 +18,7 @@ class KeyVaultDisablesPublicNetworkAccess(BaseResourceValueCheck):
     def get_expected_value(self) -> str:
         return "Disabled"
 
-    def scan_resource_conf(self, conf) -> CheckResult:
+    def scan_resource_conf(self, conf: Dict[str, Any]) -> CheckResult:
         properties = conf.get("properties", {})
         if self.get_inspected_key() in properties:
             conf_value = conf["properties"][self.get_inspected_key()]

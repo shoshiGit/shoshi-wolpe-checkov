@@ -16,7 +16,7 @@ class KeyVaultDisablesPublicNetworkAccess(BaseResourceValueCheck):
         return "publicNetworkAccess"
 
     def get_expected_value(self) -> str:
-        return "Disabled"
+        return "disabled"
 
     def scan_resource_conf(self, conf: Dict[str, Any]) -> CheckResult:
         properties = conf.get("properties", {})

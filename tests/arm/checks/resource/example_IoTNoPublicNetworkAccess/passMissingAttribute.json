@@ -1,0 +1,83 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "type": "Microsoft.Devices/IotHubs",
+      "apiVersion": "2023-06-30",
+      "name": "passMissingAttribute",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "capacity": 1,
+        "name": "S1"
+      },
+      "properties": {
+        "sku": {
+          "name": "S1",
+          "capacity": 1
+        },
+        "eventHubEndpoints": {
+          "events": {
+            "endpoint": "[concat('sb://', parameters('eventHubNamespaceName'), '.servicebus.windows.net/')]",
+            "partitionCount": 2,
+            "retentionTimeInDays": 1
+          }
+        },
+        "routing": {
+          "endpoints": {
+            "eventHubs": [
+              {
+                "name": "export2",
+                "connectionString": "[parameters('eventHubConnectionString')]"
+              }
+            ],
+            "storageContainers": [
+              {
+                "name": "export",
+                "connectionString": "[parameters('storageAccountConnectionString')]",
+                "containerName": "[parameters('storageContainerName')]",
+                "encoding": "Avro",
+                "fileNameFormat": "{iothub}/{partition}_{YYYY}_{MM}_{DD}_{HH}_{mm}",
+                "batchFrequencyInSeconds": 60,
+                "maxChunkSizeInBytes": 10485760
+              }
+            ]
+          },
+          "routes": [
+            {
+              "name": "export",
+              "source": "DeviceMessages",
+              "condition": "true",
+              "endpointNames": [
+                "export"
+              ],
+              "isEnabled": true
+            },
+            {
+              "name": "export2",
+              "source": "DeviceMessages",
+              "condition": "true",
+              "endpointNames": [
+                "export2"
+              ],
+              "isEnabled": true
+            }
+          ]
+        },
+        "enrichments": [
+          {
+            "key": "tenant",
+            "value": "$twin.tags.Tenant",
+            "endpointNames": [
+              "export",
+              "export2"
+            ]
+          }
+        ]
+      },
+      "tags": {
+        "purpose": "testing"
+      }
+    }
+  ]
+}
